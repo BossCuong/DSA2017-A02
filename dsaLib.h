@@ -59,6 +59,7 @@ public:
     T&      operator[](int i);
 
     bool    find(T& a, int& idx);
+    bool    find(T& a, L1Item<T>*&);
     T*      find(T& a);
     T*      findLast(T& a);
     int     insert(int i, T& a);
@@ -88,7 +89,84 @@ public:
         }
     }
 };
+/// List Destructor
+template <class T>
+L1List<T>::~L1List()
+{
+    if (_pHead)
+    {
+        while (_pHead)
+        {
+            L1Item<T>* p = _pHead;
+            _pHead = _pHead->pNext;
+            delete p;
+        }
+    }
+}
+/// List Indexer,Acess an item in list by index
+/// Return data of item if success
+template <class T>
+T& L1List<T>::at(int i)
+{
+    if (_pHead == NULL || i < 0 || i >= _size) throw new DSAException(-1, "List empty or wrong index");
+    L1Item<T>* _pRun = _pHead;
+    while (_pRun && i > 0)
+    {
+        _pRun = _pRun->pNext;
+        i--;
+    }
+    return _pRun->data;
+}
+template <class T>
+T& L1List<T>::operator[](int i)
+{
+    if (_pHead == NULL || i < 0 || i >= _size) throw new DSAException(-1, "List empty or wrong index");
+    L1Item<T>* _pRun = _pHead;
+    while (_pRun && i > 0)
+    {
+        _pRun = _pRun->pNext;
+        i--;
+    }
+    return _pRun->data;
+}
+///Find data in list
+///Return true and return idx by reference if success
+template<class T>
+bool L1List<T>::find(T& a, int& idx)
+{
+    if(_pHead == NULL) throw new DSAException(-1, "Ds rong");
 
+    idx = 0;
+    L1Item<T>* _pRun = _pHead;
+    while (_pRun)
+    {
+        if (_pRun->data == a) break;
+        _pRun = _pRun->pNext;
+        ++idx;
+    }
+    if (_pRun == NULL) return false;
+    else return true;
+}
+///Find data in list
+///Return true and return pointer to that element by reference if success
+template  <class T>
+bool L1List<T>::find(T& a, L1Item<T>* &_pIndex)
+{
+    if(_pHead == NULL) throw new DSAException(-1, "Ds rong");
+
+    L1Item<T>* _pRun = _pHead;
+    while (_pRun)
+    {
+        if (_pRun->data == a) break;
+        _pRun = _pRun->pNext;
+    }
+    if (_pRun == NULL) return false;
+    else
+    {
+        _pIndex = _pRun;
+        return true;
+    }
+}
 /// Insert item to the end of the list
 /// Return 0 if success
 template <class T>
@@ -155,6 +233,25 @@ int L1List<T>::removeLast() {
     }
     return -1;
 }
+/// Reverse List
+template <class T>
+void L1List<T>::reverse()
+{
+     if(_pHead == NULL) throw new DSAException(-1, "Empty List");
+     if(_size == 1) return;
+     L1Item<T>* pPre;
+     L1Item<T>* pCur = _pHead;
+     L1Item<T>* p;
+     while(pCur)
+     {
+         p = pCur->pNext;
+         pCur->pNext = pPre;
+         pPre = pCur;
+         pCur = p;
+     }
+     _pHead = pPre;
+}
+
 
 /************************************************************************
  * This section is for AVL tree
