@@ -239,7 +239,7 @@ void L1List<T>::reverse()
 {
      if(_pHead == NULL) throw new DSAException(-1, "Empty List");
      if(_size == 1) return;
-     L1Item<T>* pPre;
+     L1Item<T>* pPre = NULL;
      L1Item<T>* pCur = _pHead;
      L1Item<T>* p;
      while(pCur)
