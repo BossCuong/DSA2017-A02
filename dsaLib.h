@@ -42,14 +42,15 @@ struct L1Item {
 template <class T>
 class L1List {
     L1Item<T>   *_pHead;// The head pointer of linked list
+    L1Item<T>   *_pTail;// The tail pointer of linked list
     size_t      _size;// number of elements in this list
 public:
-    L1List() : _pHead(NULL), _size(0) {}
+    L1List() : _pHead(NULL),_pTail(NULL),_size(0) {}
     ~L1List();
 
     void    clean();
     bool    isEmpty() {
-        return _pHead == NULL;
+        return _pHead == _pTail == NULL;
     }
     size_t  getSize() {
         return _size;
@@ -99,8 +100,14 @@ L1List<T>::~L1List()
         {
             L1Item<T>* p = _pHead;
             _pHead = _pHead->pNext;
-            delete p;
+            delete p;        
         }
+        _pHead = NULL;
+    }
+    if(_pTail)
+    {
+        delete _pTail;
+        _pTail = NULL;
     }
 }
 /// List Indexer,Acess an item in list by index
@@ -256,6 +263,7 @@ void L1List<T>::reverse()
 /************************************************************************
  * This section is for AVL tree
  ************************************************************************/
+enum BFactor{EH = 0,LH = -1,RH = 1};
 template <class T>
 struct AVLNode {
     T           _data;
@@ -264,8 +272,8 @@ struct AVLNode {
     int         _height;
     AVLNode(T &a) : _data(a), _pLeft(NULL), _pRight(NULL), _height(1) {}
 #else
-    int         _bFactor;
-    AVLNode(T &a) : _data(a), _pLeft(NULL), _pRight(NULL), _bFactor(0) {}
+    BFactor b;
+    AVLNode(T &a) : _data(a), _pLeft(NULL), _pRight(NULL), b(EH) {}
 #endif
 };
 
