@@ -489,4 +489,28 @@ bool AVLTree<T>::balanceRight(AVLNode<T>*& pR){
         return false;
     }
 }
+template<class T>
+void AVLTree<T>::traverseNLR(AVLNode<T> *pR, void (*op)(T&))
+{
+    if(pR == NULL) return;
+    op(pR->_data);
+    traverseNLR(pR->_pLeft,op);
+    traverseNLR(pR->_pRight,op);
+}
+template<class T>
+void AVLTree<T>::traverseLNR(AVLNode<T> *pR, void (*op)(T&))
+{
+    if(pR == NULL) return;
+    traverseLNR(pR->_pLeft,op);
+    op(pR->_data);   
+    traverseLNR(pR->_pRight,op);
+}
+template<class T>
+void AVLTree<T>::traverseLRN(AVLNode<T> *pR, void (*op)(T&))
+{
+    if(pR == NULL) return;
+    traverseLRN(pR->_pLeft,op);
+    traverseLRN(pR->_pRight,op);
+    op(pR->_data);
+}
 #endif //A02_DSALIB_H
