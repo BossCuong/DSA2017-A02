@@ -317,4 +317,176 @@ void AVLTree<T>::destroy(AVLNode<T>* &pR)
     delete pR;
     pR = NULL;
 }
+template <class T>
+bool AVLTree<T>::insert(AVLNode<T>* &pR, T& a)
+{
+    if(pR == NULL)
+    {
+        pR = new AVLNode<T>(a);
+        return true;
+    }
+    if(a < pR->_data)
+    {
+        if(insert(pR->_pLeft,a) == false) return false;
+        return balanceLeft(pR);
+    }
+    else
+    {
+        if(insert(pR->_pRight,a) == false) return false;
+        return balanceRight(pR);
+    }
+}
+template<class T>
+bool AVLTree<T>::remove(AVLNode<T>* &pR, T& a)
+{
+    if(pR == NULL) return false;
+    bool delLeft,ret;
+
+    if(a < pR->_data)
+    {
+        delLeft = true;
+        ret = remove(pR->_pLeft,a);
+    }
+    else if(a > pR->_data)
+    {
+        delLeft = false;
+        ret = remove(pR->_pRight,a);
+    }
+    else 
+    {
+        if(pR->_pLeft == NULL)
+        {
+            AVLNode<T>* p = pR;
+            pR = pR->_pRight;
+            delete p;
+            return true;
+        }
+        if(pR->_pRight == NULL)
+        {
+            AVLNode<T>* p = pR;
+            pR = pR->_pLeft;
+            delete p;
+            return true;
+        }
+
+        AVLNode<T>* p = pR->_pRight;
+        while(p->_pLeft) p = p->_pLeft;
+        pR->_data = p->_data;
+
+        delLeft = false;
+        ret = remove(pR->_pRight,p->_data);
+    }
+    if (ret == false) return false;
+    if (delLeft)return !balanceRight(pR);
+    return !balanceLeft(pR);
+}
+template<class T>
+void AVLTree<T>::rotRight(AVLNode<T>* &pR)
+{
+    if(pR == NULL) return;
+    if(pR->_pLeft == NULL) return;
+    AVLNode<T> *p = pR->_pLeft;
+    pR->_pLeft = p->_pRight;
+    p->_pRight = pR;
+    pR = p;
+}
+template<class T>
+void AVLTree<T>::rotLeft(AVLNode<T>* &pR)
+{
+    if(pR == NULL) return;
+    if(pR->_pRight == NULL) return;
+    AVLNode<T> *p = pR->_pRight;
+    pR->_pRight = p->_pLeft;
+    p->_pLeft = pR;
+    pR = p;
+}
+template <class T>
+void AVLTree<T>::rotLR(AVLNode<T>*& pR)
+{
+    rotLeft(pR->_pLeft);
+    rotRight(pR);
+}
+template <class T>
+void AVLTree<T>::rotRL(AVLNode<T>*& pR)
+{
+    rotRight(pR->_pRight);
+    rotLeft(pR);
+}
+template <class T>
+bool AVLTree<T>::balanceLeft(AVLNode<T>*& pR)
+{
+    if(pR->b == EH) {pR->b = LH; return true;}
+    if(pR->b == RH) {pR->b = EH; return false;}
+
+    //L-L case
+    if(pR->_pLeft->b == LH)
+    {
+        rotRight(pR);
+        pR->b = pR->_pRight->b = EH;
+        return false;
+    }
+    else if(pR->_pLeft->b == EH) //L-E case
+    {
+        rotRight(pR);
+        pR->b = RH;
+        return false;
+    }
+    //L-R case
+    rotLR(pR);
+    if (pR->b == LH)
+    {
+        pR->b = pR->_pLeft->b = EH;
+        pR->_pRight->b = RH;
+        return false;
+    }
+    else if(pR->b == RH)
+    {
+        pR->b = pR->_pRight->b = EH;
+        pR->_pLeft->b = LH;
+        return false;
+    }
+    else 
+    {
+        pR->_pLeft->b = pR->_pRight->b = EH;
+        return false;
+    }
+}
+template <class T>
+bool AVLTree<T>::balanceRight(AVLNode<T>*& pR){
+    if(pR->b == EH) {pR->b = RH; return true;}
+    if(pR->b == LH) {pR->b = EH; return false;}
+
+    //R-R R-E case
+    if(pR->_pRight->b == RH)
+    {
+        rotLeft(pR);
+        pR->b = pR->_pLeft->b = EH;
+        return false;
+    }
+    else if(pR->_pRight->b == EH) //R-E case
+    {
+        rotRight(pR);
+        pR->b = LH;
+        return false;
+    }
+    //R-L case
+    rotRL(pR);
+    if (pR->b == RH)
+    {
+        pR->b = pR->_pRight->b = EH;
+        pR->_pLeft->b = LH;
+        return false;
+    }
+    else if (pR->b == LH)
+    {
+        pR->b = pR->_pLeft->b = EH;
+        pR->_pRight->b = RH;
+        return false;
+    }
+    else 
+    {
+        pR->_pLeft->b = pR->_pRight->b = EH;
+        return false;
+    }
+}
 #endif //A02_DSALIB_H
