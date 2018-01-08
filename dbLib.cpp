@@ -32,9 +32,6 @@ void loadVMDB(char *fName, L1List<VM_Record> &db)
 {
     ifstream inFile(fName);
 
-    //If file does not exist
-    if(inFile.fail()) return;
-
     if (inFile)
     {
         string line;
@@ -78,13 +75,12 @@ bool parseVMRecord(char *pBuf, VM_Record &bInfo)
     getline(stream, buf, ',');
     struct tm tm;
     strptime((char*)buf.data(), "%m/%d/%Y %H:%M:%S", &tm);
-    time_t time_stamp = timegm(&tm);
-    bInfo.timestamp = time_stamp;
+    bInfo.timestamp = timegm(&tm);
 
     //Get Tag
     getline(stream, buf, ',');
     stringstream tag;
-    tag << setfill('0') << setw(4) << buf; //Format string with leading zero
+    tag << setfill('0') << setw(4) << buf; //Padding zero to ID
     tag >> bInfo.id;
 
     //Get longitude
