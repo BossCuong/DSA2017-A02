@@ -308,5 +308,13 @@ protected:
     bool balanceLeft(AVLNode<T>* &pR);
     bool balanceRight(AVLNode<T>* &pR);
 };
+template<class T>
+void AVLTree<T>::destroy(AVLNode<T>* &pR)
+{
+    if(pR->_pLeft)  destroy(pR->_pLeft);
+    if(pR->_pRight) destroy(pR->_pRight);
 
+    delete pR;
+    pR = NULL;
+}
 #endif //A02_DSALIB_H
