@@ -518,7 +518,7 @@ void AVLTree<T>::traverseLRN(AVLNode<T> *pR, void (*op)(T&))
     op(pR->_data);
 }
 template <class T>
-bool find(AVLNode<T> *pR, T& key, T* &ret)
+bool AVLTree<T>::find(AVLNode<T> *pR, T& key, T* &ret)
 {
     if (pR == NULL)   return false;
 
@@ -526,7 +526,7 @@ bool find(AVLNode<T> *pR, T& key, T* &ret)
     if (key > pR->_data) return find(pR->_pRight, key, ret);
     else
     {
-        ret = &pR->_data;
+        ret = &(pR->_data);
         return true;
     }
 }

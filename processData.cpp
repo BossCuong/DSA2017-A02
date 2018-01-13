@@ -87,68 +87,104 @@ inline bool operator<=(VM_database& lhs, VM_database& rhs) {
 }
 bool initVMGlobalData(void** pGData) {
     // TODO: allocate and initialize global data
-    *pGData = new AVLTree<VM_database>();
+    *pGData = new L1List<VM_database>();
     // return false if failed
     return true;
 }
 void releaseVMGlobalData(void* pGData) {
     // TODO: do your cleanup, left this empty if you don't have any dynamically allocated data
-    delete (AVLTree<VM_database>*)pGData;
+    delete (L1List<VM_database>*)pGData;
 }
 
+// void creatingData(VM_Record& record ,void* pGData)
+// {
+//     VM_database key(record.id);
+//     AVLTree<VM_database>* p = (AVLTree<VM_database>*)pGData;
+//     VM_database* x;
+
+//     if(!p->find(key,x))
+//     {
+//         p->insert(key);
+//         p->find(key,x);
+//         x->data.insert(record);
+//     }
+//     else
+//         x->data.insert(record);
+// }
 void creatingData(VM_Record& record ,void* pGData)
 {
     VM_database key(record.id);
-    AVLTree<VM_database>* p = (AVLTree<VM_database>*)pGData;
-    VM_database* x; //
+    L1List<VM_database>* p = (L1List<VM_database>*)pGData;
+    L1Item<VM_database>* x;
 
     if(!p->find(key,x))
     {
-        p->insert(key);
-        p->find(key,x);
-        x->data.insert(record);
+        p->insertHead(key);
+        (p->at(0)).data.insert(record);
     }
     else
-        x->data.insert(record);
+        x->data.data.insert(record);
+}
+void re1_parseTime(time_t &dest,time_t &src,VM_Request &request)
+{
+    //parse time to tm
+    struct tm *tm = gmtime(&src);
+    string buf = request.code;
+    int pos = buf.find_last_of('_');
+    buf = buf.substr(pos + 1);
+    tm->tm_hour = stoi(buf.substr(0, 2));
+    tm->tm_min = stoi(buf.substr(2, 2));
+    tm->tm_sec = stoi(buf.substr(4, 2));
+
+    dest = timegm(tm);
 }
 bool request_1(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 {
-    // L1List<VM_database>* p = (L1List<VM_database>*)pGData;
-    // L1Item<VM_database> *x1,*x2;
-    // string buf = request.code;
-    // int pos1,pos2;
-    // pos1 = buf.find_first_of('_');
-    // pos2 = buf.find_last_of('_');
-    // L1Item<VM_Record> vec1;
-    // L1Item<VM_Record> vec2;
-    // if(p->find(buf.substr(pos1+1,)))
-    // else cout << "-1";
-    // string buf1 = request.code;
-    // string buf2 = buf1.substr(7);
-    // buf1 = buf1.substr(2,4);
-    // VM_database key1((char*)buf1.data());
-    // VM_database key2((char*)buf2.data());
-    // if(p->find(key1,x1) && p->find(key2,x2))
-    // {
+    L1List<VM_database>* database = (L1List<VM_database>*)pGData;
+    L1Item<VM_database> *x1,*x2;
 
-    // }
-    // else cout << request.code << ": " << -1 << endl;
-    // return true;
+    //Parse request code to ID
+    string VM_tag1 = request.code;
+    string VM_tag2 = VM_tag1.substr(7,4);
+    VM_tag1 = VM_tag1.substr(2,4);
+
+    VM_database key1((char*)VM_tag1.data());
+    VM_database key2((char*)VM_tag2.data());
+
+    //Find ID of VM
+    if(database->find(key1,x1) && database->find(key2,x2))
+    {   
+        //Get time to key to find in AVL database
+        VM_Record key;
+        re1_parseTime(key.timestamp,recordList[0].timestamp,request);
+
+        VM_Record *data1, *data2;
+
+        //Use time key to find record of ID 
+        if(x1->data.data.find(key,data1) && x2->data.data.find(key,data2))
+        {
+            string dir_long,dir_lat;
+            if((data1->longitude - data2->longitude) >= 0) dir_long = "E";else dir_long = "W";
+            if((data1->latitude - data2->latitude) >= 0) dir_lat = "N";else dir_lat = "S";
+            double distance = distanceEarth(data1->latitude,data1->longitude,data2->latitude,data2->longitude);
+
+            //Print result
+            cout << request.code << ": " << dir_long << " " << dir_lat << " " << distance << endl;
+            return true;
+        }
+    }
+    cout << request.code << ": " << -1 << endl;
+    return true;
 }
+
 bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pGData) {
     // TODO: Your code goes
-    if(((AVLTree<VM_database>*)pGData)->isEmpty())
-    {   
-        void (*foo)(VM_Record&,void*);
-        foo = creatingData;
-    
-        recordList.traverse(foo,pGData);
-    }
+    if(((AVLTree<VM_database>*)pGData)->isEmpty()) 
+        recordList.traverse(&creatingData,pGData);
     if(request.code[0] == '1')
     {
         return request_1(request,recordList,pGData);
     }
-    
     return false; // return false for invlaid events
 }
 
