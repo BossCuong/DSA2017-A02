@@ -50,7 +50,7 @@ public:
 
     void    clean();
     bool    isEmpty() {
-        return _pHead == _pTail == NULL;
+        return _pHead == NULL;
     }
     size_t  getSize() {
         return _size;
@@ -141,7 +141,7 @@ T& L1List<T>::operator[](int i)
 template<class T>
 bool L1List<T>::find(T& a, int& idx)
 {
-    if(_pHead == NULL) throw new DSAException(-1, "Ds rong");
+    if(_pHead == NULL) return false;
 
     idx = 0;
     L1Item<T>* _pRun = _pHead;
@@ -159,7 +159,7 @@ bool L1List<T>::find(T& a, int& idx)
 template  <class T>
 bool L1List<T>::find(T& a, L1Item<T>* &_pIndex)
 {
-    if(_pHead == NULL) throw new DSAException(-1, "Ds rong");
+    if(_pHead == NULL) return false;
 
     L1Item<T>* _pRun = _pHead;
     while (_pRun)
@@ -268,13 +268,13 @@ template <class T>
 struct AVLNode {
     T           _data;
     AVLNode<T>   *_pLeft, *_pRight;
-#ifdef AVL_USE_HEIGHT
-    int         _height;
-    AVLNode(T &a) : _data(a), _pLeft(NULL), _pRight(NULL), _height(1) {}
-#else
+// #ifdef AVL_USE_HEIGHT
+//     int         _height;
+//     AVLNode(T &a) : _data(a), _pLeft(NULL), _pRight(NULL), _height(1) {}
+// #else
     BFactor b;
     AVLNode(T &a) : _data(a), _pLeft(NULL), _pRight(NULL), b(EH) {}
-#endif
+// #endif
 };
 
 template <class T>
@@ -283,6 +283,9 @@ class AVLTree {
 public:
     AVLTree() : _pRoot(NULL) {}
     ~AVLTree() { destroy(_pRoot); }
+    bool    isEmpty() {
+        return _pRoot == NULL;
+    }
 
     bool find(T& key, T* &ret) { return find(_pRoot, key, ret); }
     bool insert(T& key) { return insert(_pRoot, key); }
@@ -311,8 +314,9 @@ protected:
 template<class T>
 void AVLTree<T>::destroy(AVLNode<T>* &pR)
 {
-    if(pR->_pLeft)  destroy(pR->_pLeft);
-    if(pR->_pRight) destroy(pR->_pRight);
+    if(pR == NULL) return;
+    destroy(pR->_pLeft);
+    destroy(pR->_pRight);
 
     delete pR;
     pR = NULL;
@@ -512,5 +516,18 @@ void AVLTree<T>::traverseLRN(AVLNode<T> *pR, void (*op)(T&))
     traverseLRN(pR->_pLeft,op);
     traverseLRN(pR->_pRight,op);
     op(pR->_data);
+}
+template <class T>
+bool find(AVLNode<T> *pR, T& key, T* &ret)
+{
+    if (pR == NULL)   return false;
+
+    if (key < pR->_data) return find(pR->_pLeft, key, ret);
+    if (key > pR->_data) return find(pR->_pRight, key, ret);
+    else
+    {
+        ret = &pR->_data;
+        return true;
+    }
 }
 #endif //A02_DSALIB_H
