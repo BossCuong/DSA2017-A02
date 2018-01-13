@@ -52,6 +52,67 @@ bool    parseVMRecord(char*, VM_Record &);
 void    loadVMDB(char*, L1List<VM_Record> &);
 double  distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
 
+inline bool operator==(VM_Record& lhs, time_t rhs) {
+    return lhs.timestamp == rhs;
+}
+inline bool operator==(time_t lhs, VM_Record& rhs)  {
+    return lhs == rhs.timestamp;
+}
+inline bool operator==(VM_Record& lhs, VM_Record& rhs) {
+    return lhs.timestamp == rhs.timestamp;
+}
+
+inline bool operator!=(VM_Record& lhs,time_t rhs) {
+    return !(lhs == rhs);
+}
+inline bool operator!=(time_t lhs, VM_Record& rhs)  {
+    return !(rhs == lhs);
+}
+inline bool operator!=(VM_Record& lhs, VM_Record& rhs) {
+    return !(lhs == rhs);
+}
+
+inline bool operator>=(VM_Record& lhs, time_t rhs) {
+    return lhs.timestamp >= rhs;
+}
+inline bool operator>=(time_t lhs, VM_Record& rhs) {
+    return lhs >= rhs.timestamp;
+}
+inline bool operator>=(VM_Record& lhs, VM_Record& rhs) {
+    return lhs.timestamp >= rhs.timestamp;
+}
+
+inline bool operator<=(VM_Record& lhs, time_t rhs)  {
+    return lhs.timestamp <= rhs;;
+}
+inline bool operator<=(time_t lhs, VM_Record& rhs)  {
+    return lhs <= rhs.timestamp;
+}
+inline bool operator<=(VM_Record& lhs, VM_Record& rhs)  {
+    return lhs.timestamp <= rhs.timestamp;
+}
+
+inline bool operator>(VM_Record& lhs, time_t rhs){
+    return lhs.timestamp > rhs;
+}
+inline bool operator>(time_t lhs, VM_Record& rhs) {
+    return lhs > rhs.timestamp;
+}
+inline bool operator>(VM_Record& lhs, VM_Record& rhs) {
+    return lhs.timestamp > rhs.timestamp;
+}
+
+inline bool operator<(VM_Record& lhs, time_t rhs) {
+    return lhs.timestamp < rhs;
+}
+inline bool operator<(time_t lhs, VM_Record& rhs) {
+    return lhs < rhs.timestamp;
+}
+inline bool operator<(VM_Record& lhs, VM_Record& rhs) {
+    return lhs.timestamp < rhs.timestamp;
+}
+
+
 bool processRequest(VM_Request &, L1List<VM_Record> &, void *);// from processData.cpp
 
 /// NOTE: student may create this function to allocate some global data
