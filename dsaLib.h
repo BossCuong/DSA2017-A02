@@ -291,6 +291,7 @@ public:
     bool insert(T& key) { return insert(_pRoot, key); }
     bool remove(T& key) { return remove(_pRoot, key); }
     void traverseNLR(void (*op)(T&)) { traverseNLR(_pRoot, op); }
+    void traverseNLR(void (*op)(T&, void*,bool&), void* pParam,bool &terminate) { traverseNLR(_pRoot, op, pParam, terminate);}
     void traverseLNR(void (*op)(T&)) { traverseLNR(_pRoot, op); }
     void traverseLRN(void (*op)(T&)) { traverseLRN(_pRoot, op); }
 
@@ -299,7 +300,9 @@ protected:
     bool find(AVLNode<T> *pR, T& key, T* &ret);
     bool insert(AVLNode<T>* &pR, T& a);
     bool remove(AVLNode<T>* &pR, T& a);
+
     void traverseNLR(AVLNode<T> *pR, void (*op)(T&));
+    void traverseNLR(AVLNode<T> *pR,void (*op)(T&, void*,bool&), void* pParam,bool &terminate);
     void traverseLNR(AVLNode<T> *pR, void (*op)(T&));
     void traverseLRN(AVLNode<T> *pR, void (*op)(T&));
 
@@ -516,6 +519,14 @@ void AVLTree<T>::traverseLRN(AVLNode<T> *pR, void (*op)(T&))
     traverseLRN(pR->_pLeft,op);
     traverseLRN(pR->_pRight,op);
     op(pR->_data);
+}
+template<class T>
+void AVLTree<T>::traverseNLR(AVLNode<T> *pR,void (*op)(T&, void*,bool&), void* pParam,bool &terminate)
+{
+    if(pR == NULL || terminate == true) return;
+    op(pR->_data,pParam,terminate);
+    traverseNLR(pR->_pLeft,op,pParam,terminate);
+    traverseNLR(pR->_pRight,op,pParam,terminate);
 }
 template <class T>
 bool AVLTree<T>::find(AVLNode<T> *pR, T& key, T* &ret)
