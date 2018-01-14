@@ -138,7 +138,7 @@ void re1_parseTime(time_t &dest,time_t &src,VM_Request &request)
 
     dest = timegm(tm);
 }
-bool request_1(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
+bool process_request_1(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 {
     L1List<VM_database>* database = (L1List<VM_database>*)pGData;
     L1Item<VM_database> *x1,*x2;
@@ -182,51 +182,54 @@ bool request_1(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 }
 ////
 ////
-struct re2_3_data
+struct request_data
 {
-    double coordinate;
+    double longitude;
+    double latitude;
+    double radius;
+    int h1,h2;
     int cnt;
-    re2_3_data() : coordinate(0),cnt(0){}
+    request_data() : longitude(0), latitude(0), cnt(0) {}
 };
-void re2_E(VM_Record &record, void *p,bool &terminate)
+void re2_counting_E(VM_Record &record, void *p, bool &terminate)
 {
-    if ((record.longitude - ((re2_3_data *)p)->coordinate) >= 0)
+    if ((record.longitude - ((request_data *)p)->longitude) >= 0)
     {
-        ((re2_3_data *)p)->cnt++;
+        ((request_data *)p)->cnt++;
         terminate = true;
     }
 }
 void process_re2_E(VM_database &record, void *p)
 {
     bool terminate = false;
-    record.data.traverseNLR(&re2_E,p,terminate);
+    record.data.traverseNLR(&re2_counting_E, p, terminate);
 }
-void re2_W(VM_Record &record, void *p,bool &terminate)
+void re2_counting_W(VM_Record &record, void *p, bool &terminate)
 {
-    if ((record.longitude - ((re2_3_data *)p)->coordinate) < 0)
+    if ((record.longitude - ((request_data *)p)->longitude) < 0)
     {
-        ((re2_3_data *)p)->cnt++;
+        ((request_data *)p)->cnt++;
         terminate = true;
     }
 }
 void process_re2_W(VM_database &record, void *p)
 {
     bool terminate = false;
-    record.data.traverseNLR(&re2_W,p,terminate);
+    record.data.traverseNLR(&re2_counting_W, p, terminate);
 }
-bool request_2(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
+bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 {
     //
-    string coordinate = request.code, relative;
-    int pos = coordinate.find_first_of('_');
-    coordinate = coordinate.substr(pos + 1);
-    pos = coordinate.find_first_of('_');
-    relative = coordinate.substr(pos + 1);
-    coordinate = coordinate.substr(0, pos);
+    stringstream stream(&request.code[2]);
+    string buf,relative;
+    getline(stream,buf,'_');
+    request.params[0] = stod(buf);
+    getline(stream,buf,'_');
+    relative = buf;
 
-    L1List<VM_database>* database = (L1List<VM_database>*)pGData;
-    void *p = new re2_3_data();
-    ((re2_3_data *)p)->coordinate = stod(coordinate);
+    L1List<VM_database> *database = (L1List<VM_database> *)pGData;
+    void *p = new request_data();
+    ((request_data *)p)->longitude = request.params[0];
 
     if (relative == "E")
         database->traverse(&process_re2_E, p);
@@ -236,10 +239,119 @@ bool request_2(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
         return false;
 
     //Print result
-    cout << request.code << ": " << ((re2_3_data *)p)->cnt << endl;
-    delete (re2_3_data *)p;
+    cout << request.code << ": " << ((request_data *)p)->cnt << endl;
+    delete (request_data *)p;
     return true;
 }
+/////
+void re3_counting_N(VM_Record &record, void *p, bool &terminate)
+{
+    if ((record.latitude - ((request_data *)p)->latitude) >= 0)
+    {
+        ((request_data *)p)->cnt++;
+        terminate = true;
+    }
+}
+void process_re3_N(VM_database &record, void *p)
+{
+    bool terminate = false;
+    record.data.traverseNLR(&re3_counting_N, p, terminate);
+}
+void re3_counting_S(VM_Record &record, void *p, bool &terminate)
+{
+    if ((record.latitude - ((request_data *)p)->latitude) < 0)
+    {
+        ((request_data *)p)->cnt++;
+        terminate = true;
+    }
+}
+void process_re3_S(VM_database &record, void *p)
+{
+    bool terminate = false;
+    record.data.traverseNLR(&re3_counting_S, p, terminate);
+}
+bool process_request_3(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
+{
+    //
+    stringstream stream(&request.code[2]);
+    string buf,relative;
+    getline(stream,buf,'_');
+    request.params[0] = stod(buf);
+    getline(stream,buf,'_');
+    relative = buf;
+
+    L1List<VM_database> *database = (L1List<VM_database> *)pGData;
+    void *p = new request_data();
+    ((request_data *)p)->latitude = request.params[0];
+
+    if (relative == "N")
+        database->traverse(&process_re3_N, p);
+    else if (relative == "S")
+        database->traverse(&process_re3_S, p);
+    else
+        return false;
+
+    //Print result
+    cout << request.code << ": " << ((request_data *)p)->cnt << endl;
+    delete (request_data *)p;
+    return true;
+}
+////
+void re4_counting(VM_Record &record, void *p, bool &terminate)
+{
+    request_data* re_data = (request_data *)p;
+    double distance = distanceEarth(re_data->latitude,re_data->longitude,record.latitude,record.longitude);
+    
+    if(distance <= re_data->radius && record.timestamp >= re_data->h1 && record.timestamp <= re_data->h2)
+    {
+        re_data->cnt++;
+        terminate = true;
+    }
+}
+void process_re4(VM_database &record, void *p)
+{
+    bool terminate = false;
+    record.data.traverseNLR(&re4_counting, p, terminate);
+}
+bool process_request_4(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
+{
+    //
+    stringstream stream(&request.code[2]);
+    string buf,relative;
+    int i = 0;
+    while(getline(stream,buf,'_'))
+    {
+        request.params[i] = stod(buf);
+        i++;
+    }
+    
+
+    L1List<VM_database> *database = (L1List<VM_database> *)pGData;
+    void *p = new request_data();
+    ((request_data *)p)->longitude = request.params[0];
+    ((request_data *)p)->latitude = request.params[1];
+    ((request_data *)p)->radius = request.params[2];
+
+    //parse time to tm
+    struct tm *tm = gmtime(&recordList[0].timestamp);
+    tm->tm_min  = 0;
+    tm->tm_sec  = 0;
+
+    tm->tm_hour = request.params[3]; 
+    ((request_data *)p)->h1 = timegm(tm);
+    tm->tm_hour = request.params[4];
+    ((request_data *)p)->h2 = timegm(tm);
+
+    database->traverse(&process_re4, p);
+
+    //Print result
+    cout << request.code << ": " << ((request_data *)p)->cnt << endl;
+    delete (request_data *)p;
+    return true;
+}
+////
+////
+
 bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pGData) {
     // TODO: Your code goes
     if(((AVLTree<VM_database>*)pGData)->isEmpty()) 
@@ -247,13 +359,20 @@ bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pG
 
     if(request.code[0] == '1')
     {
-        return request_1(request,recordList,pGData);
+        return process_request_1(request,recordList,pGData);
     }
     if(request.code[0] == '2')
     {
-        return request_2(request,recordList,pGData);
+        return process_request_2(request,recordList,pGData);
     }
-
+    if(request.code[0] == '3')
+    {
+        return process_request_3(request,recordList,pGData);
+    }
+    if(request.code[0] == '4')
+    {
+        return process_request_4(request,recordList,pGData);
+    }
     return false; // return false for invlaid events
 }
 
