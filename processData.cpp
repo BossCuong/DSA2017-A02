@@ -111,7 +111,7 @@ void releaseVMGlobalData(void* pGData) {
 //     else
 //         x->data.insert(record);
 // }
-void creatingData(VM_Record& record ,void* pGData)
+void initDatabase(VM_Record& record ,void* pGData)
 {
     VM_database key(record.id);
     L1List<VM_database>* p = (L1List<VM_database>*)pGData;
@@ -148,43 +148,112 @@ bool request_1(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
     string VM_tag2 = VM_tag1.substr(7,4);
     VM_tag1 = VM_tag1.substr(2,4);
 
-    VM_database key1((char*)VM_tag1.data());
-    VM_database key2((char*)VM_tag2.data());
+    //Key contain ID to find ID in database  
+    VM_database list_key1((char*)VM_tag1.data());
+    VM_database list_key2((char*)VM_tag2.data());
 
-    //Find ID of VM
-    if(database->find(key1,x1) && database->find(key2,x2))
+    //Find ID of VM,return reference of ID database to x1,x2
+    if(database->find(list_key1,x1) && database->find(list_key2,x2))
     {   
         //Get time to key to find in AVL database
-        VM_Record key;
-        re1_parseTime(key.timestamp,recordList[0].timestamp,request);
+        VM_Record avl_key;
+        re1_parseTime(avl_key.timestamp,recordList[0].timestamp,request);
 
-        VM_Record *data1, *data2;
+        VM_Record *record1, *record2;
 
-        //Use time key to find record of ID 
-        if(x1->data.data.find(key,data1) && x2->data.data.find(key,data2))
+        //Use time key to find record have time in request,return reference of record to data1,data2
+        if(x1->data.data.find(avl_key,record1) && x2->data.data.find(avl_key,record2))
         {
-            string dir_long,dir_lat;
-            if((data1->longitude - data2->longitude) >= 0) dir_long = "E";else dir_long = "W";
-            if((data1->latitude - data2->latitude) >= 0) dir_lat = "N";else dir_lat = "S";
-            double distance = distanceEarth(data1->latitude,data1->longitude,data2->latitude,data2->longitude);
+            //Set relative of VM
+            string relative_long,relative_lat;
+            if((record1->longitude - record2->longitude) >= 0) relative_long = "E"; else relative_long = "W";
+            if((record1->latitude - record2->latitude) >= 0)   relative_lat = "N";  else relative_lat = "S";
+            //Caculating distance of two VM
+            double distance = distanceEarth(record1->latitude,record1->longitude,record2->latitude,record2->longitude);
 
             //Print result
-            cout << request.code << ": " << dir_long << " " << dir_lat << " " << distance << endl;
+            cout << request.code << ": " << relative_long << " " << relative_lat << " " << distance << endl;
             return true;
         }
     }
+    
     cout << request.code << ": " << -1 << endl;
     return true;
 }
+////
+////
+struct re2_3_data
+{
+    double coordinate;
+    int cnt;
+    re2_3_data() : coordinate(0),cnt(0){}
+};
+void re2_E(VM_Record &record, void *p,bool &terminate)
+{
+    if ((record.longitude - ((re2_3_data *)p)->coordinate) >= 0)
+    {
+        ((re2_3_data *)p)->cnt++;
+        terminate = true;
+    }
+}
+void process_re2_E(VM_database &record, void *p)
+{
+    bool terminate = false;
+    record.data.traverseNLR(&re2_E,p,terminate);
+}
+void re2_W(VM_Record &record, void *p,bool &terminate)
+{
+    if ((record.longitude - ((re2_3_data *)p)->coordinate) < 0)
+    {
+        ((re2_3_data *)p)->cnt++;
+        terminate = true;
+    }
+}
+void process_re2_W(VM_database &record, void *p)
+{
+    bool terminate = false;
+    record.data.traverseNLR(&re2_W,p,terminate);
+}
+bool request_2(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
+{
+    //
+    string coordinate = request.code, relative;
+    int pos = coordinate.find_first_of('_');
+    coordinate = coordinate.substr(pos + 1);
+    pos = coordinate.find_first_of('_');
+    relative = coordinate.substr(pos + 1);
+    coordinate = coordinate.substr(0, pos);
 
+    L1List<VM_database>* database = (L1List<VM_database>*)pGData;
+    void *p = new re2_3_data();
+    ((re2_3_data *)p)->coordinate = stod(coordinate);
+
+    if (relative == "E")
+        database->traverse(&process_re2_E, p);
+    else if (relative == "W")
+        database->traverse(&process_re2_W, p);
+    else
+        return false;
+
+    //Print result
+    cout << request.code << ": " << ((re2_3_data *)p)->cnt << endl;
+    delete (re2_3_data *)p;
+    return true;
+}
 bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pGData) {
     // TODO: Your code goes
     if(((AVLTree<VM_database>*)pGData)->isEmpty()) 
-        recordList.traverse(&creatingData,pGData);
+        recordList.traverse(&initDatabase,pGData);
+
     if(request.code[0] == '1')
     {
         return request_1(request,recordList,pGData);
     }
+    if(request.code[0] == '2')
+    {
+        return request_2(request,recordList,pGData);
+    }
+
     return false; // return false for invlaid events
 }
 
