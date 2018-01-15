@@ -60,7 +60,7 @@ public:
     T&      operator[](int i);
 
     bool    find(T& a, int& idx);
-    bool    find(T& a, L1Item<T>*&);
+    bool    find(T& a, T*& ret);
     T*      find(T& a);
     T*      findLast(T& a);
     int     insert(int i, T& a);
@@ -157,7 +157,7 @@ bool L1List<T>::find(T& a, int& idx)
 ///Find data in list
 ///Return true and return pointer to that element by reference if success
 template  <class T>
-bool L1List<T>::find(T& a, L1Item<T>* &_pIndex)
+bool L1List<T>::find(T& a, T* &ret)
 {
     if(_pHead == NULL) return false;
 
@@ -170,7 +170,7 @@ bool L1List<T>::find(T& a, L1Item<T>* &_pIndex)
     if (_pRun == NULL) return false;
     else
     {
-        _pIndex = _pRun;
+        ret = &_pRun->data;
         return true;
     }
 }
