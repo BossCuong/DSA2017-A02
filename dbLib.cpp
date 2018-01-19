@@ -19,7 +19,7 @@
 #include <cmath>
 #define __PI 3.14159265358979323846
 #define earthRadiusKm 6371.0
-
+#define ID_LENGTH 4
 using namespace std;
 
 void strPrintTime(char *des, time_t &t)
@@ -79,9 +79,8 @@ bool parseVMRecord(char *pBuf, VM_Record &bInfo)
 
     //Get Tag
     getline(stream, buf, ',');
-    stringstream tag;
-    tag << setfill('0') << setw(4) << buf; //Padding zero to ID
-    tag >> bInfo.id;
+    if(buf.length() < ID_LENGTH) buf = string(ID_LENGTH - buf.length(), '0').append(buf); //Padding zero to ID
+    strcpy(bInfo.id,(char*)buf.data());
 
     //Get longitude
     getline(stream, buf, ',');
