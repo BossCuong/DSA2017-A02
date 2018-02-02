@@ -228,12 +228,28 @@ bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void 
             ((request_data *)p)->cnt++;
     };
     //
-    stringstream stream(&request.code[2]);
+
+    stringstream stream(request.code);
     string buf, relative;
-    getline(stream, buf, '_');
+    if (!getline(stream, buf, '_'))
+        return false;
+
+    if (!getline(stream, buf, '_'))
+        return false;
     request.params[0] = stod(buf);
-    getline(stream, buf, '_');
+    if (!getline(stream, buf, '_'))
+        return false;
     relative = buf;
+
+    if (!stream.eof() || relative.length() != 1)
+        return false;
+    //Find ID of VM,return reference of ID database to x1,x2
+    
+    
+    getline(stream, buf, '_');
+    
+    getline(stream, buf, '_');
+   
 
     L1List<VM_database> *database = (L1List<VM_database> *)pGData;
     void *p = new request_data();
@@ -247,7 +263,7 @@ bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void 
         return false;
 
     //Print result
-    cout << request.code << ": " << ((request_data *)p)->cnt << endl;
+    cout << request.code[0] << ": " << ((request_data *)p)->cnt << endl;
     delete (request_data *)p;
     return true;
 }
