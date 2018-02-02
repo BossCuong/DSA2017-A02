@@ -59,6 +59,7 @@ void loadVMDB(char *fName, L1List<VM_Record> &db)
     else
     {
         cout << "The file is not found!";
+        throw DSAException(-1,"File not found");
     }
 }
 
@@ -79,7 +80,6 @@ bool parseVMRecord(char *pBuf, VM_Record &bInfo)
 
     //Get Tag
     getline(stream, buf, ',');
-    if(buf.length() < ID_LENGTH) buf = string(ID_LENGTH - buf.length(), '0').append(buf); //Padding zero to ID
     strcpy(bInfo.id,(char*)buf.data());
 
     //Get longitude
