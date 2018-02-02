@@ -340,14 +340,18 @@ bool process_request_4(VM_Request &request, L1List<VM_Record> &recordList, void 
         record.data.traverseNLR(re4_counting, p, terminate);
     };
 
-    stringstream stream(&request.code[2]);
+    stringstream stream(request.code);
     string buf;
+    if (!getline(stream, buf, '_'))
+        return false;
+
     int i = 0;
     while (getline(stream, buf, '_'))
     {
         request.params[i] = stod(buf);
         i++;
     }
+    if (i!= 5) return false;
 
     L1List<VM_database> *database = (L1List<VM_database> *)pGData;
     void *p = new request_data();
@@ -368,7 +372,7 @@ bool process_request_4(VM_Request &request, L1List<VM_Record> &recordList, void 
     database->traverse(process_re4, p);
 
     //Print result
-    cout << request.code << ": " << ((request_data *)p)->cnt << endl;
+    cout << request.code[0] << ": " << ((request_data *)p)->cnt << endl;
     delete (request_data *)p;
     return true;
 }
