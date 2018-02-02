@@ -243,13 +243,6 @@ bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void 
 
     if (!stream.eof() || relative.length() != 1)
         return false;
-    //Find ID of VM,return reference of ID database to x1,x2
-    
-    
-    getline(stream, buf, '_');
-    
-    getline(stream, buf, '_');
-   
 
     L1List<VM_database> *database = (L1List<VM_database> *)pGData;
     void *p = new request_data();
