@@ -217,7 +217,7 @@ bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void 
         };
 
         //Counting valid ID
-        bool terminate = false;
+        bool terminate = !record.isValid;
         record.data.traverseNLR(isNotEast, p, terminate);
         if (!terminate)
             ((request_data *)p)->cnt++;
@@ -231,7 +231,7 @@ bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void 
         };
 
         //Counting valid ID
-        bool terminate = false;
+        bool terminate = !record.isValid;
         record.data.traverseNLR(isNotWest, p, terminate);
         if (!terminate)
             ((request_data *)p)->cnt++;
@@ -278,7 +278,7 @@ bool process_request_3(VM_Request &request, L1List<VM_Record> &recordList, void 
         };
 
         //Check valid ID
-        bool terminate = false;
+        bool terminate = !record.isValid;
         record.data.traverseNLR(re3_counting_N, p, terminate);
         if (!terminate)
             ((request_data *)p)->cnt++;
@@ -292,7 +292,7 @@ bool process_request_3(VM_Request &request, L1List<VM_Record> &recordList, void 
         };
 
         //Check valid ID
-        bool terminate = false;
+        bool terminate = !record.isValid;
         record.data.traverseNLR(re3_counting_S, p, terminate);
         if (!terminate)
             ((request_data *)p)->cnt++;
@@ -344,7 +344,7 @@ bool process_request_4(VM_Request &request, L1List<VM_Record> &recordList, void 
             }
         };
         //Check valid ID
-        bool terminate = false;
+        bool terminate = !record.isValid;
         record.data.traverseNLR(re4_counting, p, terminate);
     };
 
@@ -428,13 +428,19 @@ bool process_request_5(VM_Request &request, L1List<VM_Record> &recordList, void 
 
     VM_database *x;
     //Find VM_database and return it pointer of data to x by reference
-    database->find(key, x);
-    //Traverse AVL in data have key ID
-    bool terminate = false; //ignore this
-    x->data.traverseLNR(re5_counting, p);
+    if (database->find(key, x))
+    {
+        if (x->isValid)
+        {
+            //Traverse AVL in data have key ID
+            x->data.traverseLNR(re5_counting, p);
 
-    //Print result
-    cout << request.code[0] << ": " << ((request_data *)p)->cnt << endl;
+            //Print result
+            cout << request.code[0] << ": " << ((request_data *)p)->cnt << endl;
+            return true;
+        }
+    }
+    cout << request.code[0] << ": " << -1 << endl;
     delete (request_data *)p;
     return true;
 }
@@ -465,9 +471,9 @@ bool process_request_8(VM_Request &request, L1List<VM_Record> &recordList, void 
             }
         };
         //Counting valid ID
-        bool terminate = false;
+        bool terminate = !record.isValid;
         record.data.traverseNLR(isDelay, p, terminate);
-        if (terminate)
+        if (terminate && record.isValid == true)
         {  
            cout << " " << record.id;
            record.isValid = false;
