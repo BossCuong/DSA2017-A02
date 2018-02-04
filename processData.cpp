@@ -108,24 +108,27 @@ inline bool operator<=(VM_database &lhs, VM_database &rhs)
 bool initVMGlobalData(void **pGData)
 {
     // TODO: allocate and initialize global data
-    *pGData = new L1List<VM_database>();
+    *pGData = new AVLTree<VM_database>();
     // return false if failed
     return true;
 }
 void releaseVMGlobalData(void *pGData)
 {
     // TODO: do your cleanup, left this empty if you don't have any dynamically allocated data
-    delete (L1List<VM_database> *)pGData;
+    delete (AVLTree<VM_database> *)pGData;
 }
 struct request_data
 {
+    void* pData;
     double longitude;
     double latitude;
+    time_t t1,t2;
     double radius;
     int h1, h2;
     bool isOutCircle;
     int cnt;
-    request_data() : longitude(0), latitude(0), cnt(0), isOutCircle(true) {}
+    L1List<VM_database> temp_data;
+    request_data() : longitude(0), latitude(0), radius(0),t1(0),t2(0), cnt(0), isOutCircle(true) {}
 };
 bool process_request_1(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 {
@@ -139,7 +142,7 @@ bool process_request_1(VM_Request &request, L1List<VM_Record> &recordList, void 
         dest = timegm(tm);
     };
 
-    L1List<VM_database> *database = (L1List<VM_database> *)pGData;
+    AVLTree<VM_database> *database = (AVLTree<VM_database> *)pGData;
     VM_database *x1, *x2;
 
     stringstream stream(request.code);
@@ -217,7 +220,7 @@ bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void 
     void (*process_re2_W)(VM_database &, void *) = [](VM_database &record, void *p) {
         //Fucntion check if record coordinate not in West
         void (*isNotWest)(VM_Record &, void *, bool &) = [](VM_Record &record, void *p, bool &terminate) {
-            if (!((record.longitude - ((request_data *)p)->longitude) < 0))
+            if (!((record.longitude - ((request_data *)p)->longitude) <= 0))
                 terminate = true;
         };
 
@@ -227,7 +230,6 @@ bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void 
         if (!terminate)
             ((request_data *)p)->cnt++;
     };
-    //
 
     stringstream stream(request.code);
     string buf, relative;
@@ -244,14 +246,14 @@ bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void 
     if (!stream.eof() || relative.length() != 1)
         return false;
 
-    L1List<VM_database> *database = (L1List<VM_database> *)pGData;
+    AVLTree<VM_database> *database = (AVLTree<VM_database> *)pGData;
     void *p = new request_data();
     ((request_data *)p)->longitude = request.params[0];
 
     if (relative == "E")
-        database->traverse(process_re2_E, p);
+        database->traverseLNR(process_re2_E, p);
     else if (relative == "W")
-        database->traverse(process_re2_W, p);
+        database->traverseLNR(process_re2_W, p);
     else
         return false;
 
@@ -279,7 +281,7 @@ bool process_request_3(VM_Request &request, L1List<VM_Record> &recordList, void 
     void (*process_re3_S)(VM_database &, void *) = [](VM_database &record, void *p) {
         //Fucntion check if record coordinate not in South
         void (*re3_counting_S)(VM_Record &, void *, bool &) = [](VM_Record &record, void *p, bool &terminate) {
-            if (!((record.latitude - ((request_data *)p)->latitude) < 0))
+            if (!((record.latitude - ((request_data *)p)->latitude) <= 0))
                 terminate = true;
         };
 
@@ -305,14 +307,14 @@ bool process_request_3(VM_Request &request, L1List<VM_Record> &recordList, void 
     if (!stream.eof() || relative.length() != 1)
         return false;
 
-    L1List<VM_database> *database = (L1List<VM_database> *)pGData;
+    AVLTree<VM_database> *database = (AVLTree<VM_database> *)pGData;
     void *p = new request_data();
     ((request_data *)p)->latitude = request.params[0];
 
     if (relative == "N")
-        database->traverse(process_re3_N, p);
+        database->traverseLNR(process_re3_N, p);
     else if (relative == "S")
-        database->traverse(process_re3_S, p);
+        database->traverseLNR(process_re3_S, p);
     else
         return false;
 
@@ -351,9 +353,10 @@ bool process_request_4(VM_Request &request, L1List<VM_Record> &recordList, void 
         request.params[i] = stod(buf);
         i++;
     }
-    if (i!= 5) return false;
+    if (i != 5)
+        return false;
 
-    L1List<VM_database> *database = (L1List<VM_database> *)pGData;
+    AVLTree<VM_database> *database = (AVLTree<VM_database> *)pGData;
     void *p = new request_data();
     ((request_data *)p)->longitude = request.params[0];
     ((request_data *)p)->latitude = request.params[1];
@@ -369,7 +372,7 @@ bool process_request_4(VM_Request &request, L1List<VM_Record> &recordList, void 
     tm->tm_hour = request.params[4];
     ((request_data *)p)->h2 = timegm(tm);
 
-    database->traverse(process_re4, p);
+    database->traverseLNR(process_re4, p);
 
     //Print result
     cout << request.code[0] << ": " << ((request_data *)p)->cnt << endl;
@@ -378,9 +381,10 @@ bool process_request_4(VM_Request &request, L1List<VM_Record> &recordList, void 
 }
 bool process_request_5(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 {
-    void (*re5_counting)(VM_Record &, void *, bool &) = [](VM_Record &record, void *p, bool &terminate) {
+    void (*re5_counting)(VM_Record &, void *) = [](VM_Record &record, void *p) {
         request_data *re_data = (request_data *)p;
         double distance = distanceEarth(re_data->latitude, re_data->longitude, record.latitude, record.longitude);
+
         if (distance <= re_data->radius && re_data->isOutCircle == true)
         {
             re_data->cnt++;
@@ -396,7 +400,8 @@ bool process_request_5(VM_Request &request, L1List<VM_Record> &recordList, void 
     string buf, relative;
 
     //Init key to find ID in database
-    getline(stream, buf, '_');
+    if (!getline(stream, buf, '_'))
+        return false;
     VM_database key((char *)buf.data());
 
     int i = 0;
@@ -405,23 +410,123 @@ bool process_request_5(VM_Request &request, L1List<VM_Record> &recordList, void 
         request.params[i] = stod(buf);
         i++;
     }
-
-    L1List<VM_database> *database = (L1List<VM_database> *)pGData;
+    if (i != 3)
+        return false;
+    AVLTree<VM_database> *database = (AVLTree<VM_database> *)pGData;
 
     void *p = new request_data();
     ((request_data *)p)->longitude = request.params[0];
     ((request_data *)p)->latitude = request.params[1];
     ((request_data *)p)->radius = request.params[2];
+    ((request_data *)p)->isOutCircle = true;
 
     VM_database *x;
     //Find VM_database and return it pointer of data to x by reference
     database->find(key, x);
     //Traverse AVL in data have key ID
     bool terminate = false; //ignore this
-    x->data.traverseNLR(re5_counting, p, terminate);
+    x->data.traverseLNR(re5_counting, p);
 
     //Print result
-    cout << request.code << ": " << ((request_data *)p)->cnt << endl;
+    cout << request.code[0] << ": " << ((request_data *)p)->cnt << endl;
+    delete (request_data *)p;
+    return true;
+}
+bool process_request_8(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
+{
+    void (*parseTime)(time_t &, string &, time_t &) = [](time_t &dest, string &src, time_t &scale) {
+        //parse time to tm
+        struct tm *tm = gmtime(&scale);
+        tm->tm_hour = stoi(src.substr(0, 2));
+        tm->tm_min = stoi(src.substr(2, 2));
+        tm->tm_sec = 0;
+
+        dest = timegm(tm);
+    };
+    void (*re8_counting)(VM_database &, void *) = [](VM_database &record, void *p) {
+        //Fucntion check if record coordinate not in East
+        void (*isDelay)(VM_Record &, void *, bool &) = [](VM_Record &record, void *p, bool &terminate) {
+            //If find it,set terminate to true to terminate traverse
+            request_data *re_data = (request_data *)p;
+            double distance = distanceEarth(re_data->latitude, re_data->longitude, record.latitude, record.longitude);
+
+            if (distance <= re_data->radius)
+            {
+                if(record.timestamp >= re_data->t1 && record.timestamp <= (re_data->t1 +59))
+                {
+                    terminate = true;
+                }
+            }
+        };
+        //Counting valid ID
+        bool terminate = false;
+        record.data.traverseNLR(isDelay, p, terminate);
+        if (terminate)
+        {   
+           ((request_data *)p)->temp_data.insertHead(record);
+        }
+    };
+    void(*print_result)(VM_database&,void* p) = [](VM_database& record,void* p){
+        AVLTree<VM_database> *database = (AVLTree<VM_database>*)((request_data *)p)->pData;
+        cout << " " << record.id;
+    };
+    stringstream stream(request.code);
+    string buf, time_src;
+    void *p = new request_data();
+
+    if (!getline(stream, buf, '_'))
+        return false;
+
+    //Get data form request code
+    if (!getline(stream, buf, '_'))
+        return false;
+    ((request_data *)p)->longitude = stod(buf);
+    if (!getline(stream, buf, '_'))
+        return false;
+    ((request_data *)p)->latitude = stod(buf);
+    if (!getline(stream, buf, '_'))
+        return false;
+    ((request_data *)p)->radius = stod(buf);
+    if (!getline(stream, buf, '_'))
+        return false;
+    time_src = buf;
+    if (!stream.eof() && time_src.length() != 4)
+        return false;
+    
+    parseTime(((request_data *)p)->t1,time_src,recordList[0].timestamp);
+    AVLTree<VM_database> *database = (AVLTree<VM_database> *)pGData;
+    ((request_data *)p)->pData = database;
+
+    database->traverseRNL(re8_counting,p);
+    //Print result
+    cout << request.code[0] << ":";
+    ((request_data *)p)->temp_data.traverse(print_result,p);
+    
+    string text;
+    VM_database a1;
+    text = "02";
+    strcpy(a1.id,(char*)text.data());
+    database->remove(a1);
+
+    text = "05";
+    strcpy(a1.id,(char*)text.data());
+    database->remove(a1);
+
+    text = "07";
+    strcpy(a1.id,(char*)text.data());
+    database->remove(a1);
+
+    text = "1007";
+    strcpy(a1.id,(char*)text.data());
+    database->remove(a1);
+
+    text = "1058";
+    strcpy(a1.id,(char*)text.data());
+    database->remove(a1);
+
+    text = "1061";
+    strcpy(a1.id,(char*)text.data());
+    database->remove(a1);
     delete (request_data *)p;
     return true;
 }
@@ -434,13 +539,14 @@ bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pG
         //Function pointer to creat dabase
         void (*initDatabase)(VM_Record &, void *) = [](VM_Record &record, void *pGData) {
             VM_database key(record.id);
-            L1List<VM_database> *p = (L1List<VM_database> *)pGData;
+            AVLTree<VM_database> *p = (AVLTree<VM_database> *)pGData;
             VM_database *x;
 
             if (!p->find(key, x))
             {
-                p->insertHead(key);
-                (p->at(0)).data.insert(record);
+                p->insert(key);
+                p->find(key, x);
+                x->data.insert(record);
             }
             else
                 x->data.insert(record);
@@ -466,8 +572,8 @@ bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pG
     case '5':
         return process_request_5(request, recordList, pGData);
         break;
-    case '6':
-        return process_request_5(request, recordList, pGData);
+    case '8':
+        return process_request_8(request, recordList, pGData);
         break;
     default:
         return false; // return false for invlaid events
