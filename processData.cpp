@@ -477,6 +477,7 @@ bool process_request_8(VM_Request &request, L1List<VM_Record> &recordList, void 
         {  
            cout << " " << record.id;
            record.isValid = false;
+           ((request_data *)p)->cnt++;
         }
     };
     stringstream stream(request.code);
@@ -508,6 +509,7 @@ bool process_request_8(VM_Request &request, L1List<VM_Record> &recordList, void 
 
     cout << request.code[0] << ":";
     database->traverseLNR(re8_counting,p);
+    if(((request_data *)p)->cnt == 0) cout << " " << 0;
     cout << endl;
     delete (request_data *)p;
     return true;
@@ -539,11 +541,12 @@ bool process_request_9(VM_Request &request, L1List<VM_Record> &recordList, void 
             }
         };
         //Counting valid ID
-        bool terminate = false;
+        bool terminate = record.isValid;
         record.data.traverseNLR(isRecover, p, terminate);
-        if (terminate)
+        if (terminate && record.isValid == false)
         {  
            cout << " " << record.id;
+           ((request_data *)p)->cnt++;
            record.isValid = true;
         }
     };
@@ -576,6 +579,7 @@ bool process_request_9(VM_Request &request, L1List<VM_Record> &recordList, void 
 
     cout << request.code[0] << ":";
     database->traverseLNR(re9_counting,p);
+    if(((request_data *)p)->cnt == 0) cout << " " << 0;
     cout << endl;
     delete (request_data *)p;
     return true;
