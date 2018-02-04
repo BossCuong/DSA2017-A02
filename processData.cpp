@@ -18,14 +18,17 @@ struct VM_database
 {
     char id[ID_MAX_LENGTH];
     AVLTree<VM_Record> data;
+    bool isValid;
     // default constructor
     VM_database()
     {
+        isValid = true;
         id[0] = 0;
     }
     VM_database(const char *busID)
     {
         strcpy(id, busID);
+        isValid = true;
     }
 };
 inline bool operator==(VM_database &lhs, char *rhs)
@@ -168,31 +171,34 @@ bool process_request_1(VM_Request &request, L1List<VM_Record> &recordList, void 
 
     if (database->find(list_key1, x1) && database->find(list_key2, x2))
     {
-        //Get time to key to find in AVL database
-        VM_Record avl_key;
-        re1_parseTime(avl_key.timestamp, time_src, recordList[0].timestamp);
-
-        VM_Record *record1, *record2;
-
-        //Use time key to find record have time in request,return reference of record to data1,data2
-        if (x1->data.find(avl_key, record1) && x2->data.find(avl_key, record2))
+        if (x1->isValid == true && x2->isValid == true)
         {
-            //Set relative of VM
-            string relative_long, relative_lat;
-            if ((record1->longitude - record2->longitude) >= 0)
-                relative_long = "E";
-            else
-                relative_long = "W";
-            if ((record1->latitude - record2->latitude) >= 0)
-                relative_lat = "N";
-            else
-                relative_lat = "S";
-            //Caculating distance of two VM
-            double distance = distanceEarth(record1->latitude, record1->longitude, record2->latitude, record2->longitude);
+            //Get time to key to find in AVL database
+            VM_Record avl_key;
+            re1_parseTime(avl_key.timestamp, time_src, recordList[0].timestamp);
 
-            //Print result
-            cout << request.code[0] << ": " << relative_long << " " << relative_lat << " " << distance << endl;
-            return true;
+            VM_Record *record1, *record2;
+
+            //Use time key to find record have time in request,return reference of record to data1,data2
+            if (x1->data.find(avl_key, record1) && x2->data.find(avl_key, record2))
+            {
+                //Set relative of VM
+                string relative_long, relative_lat;
+                if ((record1->longitude - record2->longitude) >= 0)
+                    relative_long = "E";
+                else
+                    relative_long = "W";
+                if ((record1->latitude - record2->latitude) >= 0)
+                    relative_lat = "N";
+                else
+                    relative_lat = "S";
+                //Caculating distance of two VM
+                double distance = distanceEarth(record1->latitude, record1->longitude, record2->latitude, record2->longitude);
+
+                //Print result
+                cout << request.code[0] << ": " << relative_long << " " << relative_lat << " " << distance << endl;
+                return true;
+            }
         }
     }
 
@@ -462,13 +468,10 @@ bool process_request_8(VM_Request &request, L1List<VM_Record> &recordList, void 
         bool terminate = false;
         record.data.traverseNLR(isDelay, p, terminate);
         if (terminate)
-        {   
-           ((request_data *)p)->temp_data.insertHead(record);
+        {  
+           cout << " " << record.id;
+           record.isValid = false;
         }
-    };
-    void(*print_result)(VM_database&,void* p) = [](VM_database& record,void* p){
-        AVLTree<VM_database> *database = (AVLTree<VM_database>*)((request_data *)p)->pData;
-        cout << " " << record.id;
     };
     stringstream stream(request.code);
     string buf, time_src;
@@ -497,36 +500,9 @@ bool process_request_8(VM_Request &request, L1List<VM_Record> &recordList, void 
     AVLTree<VM_database> *database = (AVLTree<VM_database> *)pGData;
     ((request_data *)p)->pData = database;
 
-    database->traverseRNL(re8_counting,p);
-    //Print result
     cout << request.code[0] << ":";
-    ((request_data *)p)->temp_data.traverse(print_result,p);
-    
-    string text;
-    VM_database a1;
-    text = "02";
-    strcpy(a1.id,(char*)text.data());
-    database->remove(a1);
-
-    text = "05";
-    strcpy(a1.id,(char*)text.data());
-    database->remove(a1);
-
-    text = "07";
-    strcpy(a1.id,(char*)text.data());
-    database->remove(a1);
-
-    text = "1007";
-    strcpy(a1.id,(char*)text.data());
-    database->remove(a1);
-
-    text = "1058";
-    strcpy(a1.id,(char*)text.data());
-    database->remove(a1);
-
-    text = "1061";
-    strcpy(a1.id,(char*)text.data());
-    database->remove(a1);
+    database->traverseLNR(re8_counting,p);
+    cout << endl;
     delete (request_data *)p;
     return true;
 }
