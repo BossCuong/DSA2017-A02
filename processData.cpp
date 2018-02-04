@@ -506,6 +506,75 @@ bool process_request_8(VM_Request &request, L1List<VM_Record> &recordList, void 
     delete (request_data *)p;
     return true;
 }
+bool process_request_9(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
+{
+    void (*parseTime)(time_t &, string &, time_t &) = [](time_t &dest, string &src, time_t &scale) {
+        //parse time to tm
+        struct tm *tm = gmtime(&scale);
+        tm->tm_hour = stoi(src.substr(0, 2));
+        tm->tm_min = stoi(src.substr(2, 2));
+        tm->tm_sec = 0;
+
+        dest = timegm(tm);
+    };
+    void (*re9_counting)(VM_database &, void *) = [](VM_database &record, void *p) {
+        //Fucntion check if record coordinate not in East
+        void (*isRecover)(VM_Record &, void *, bool &) = [](VM_Record &record, void *p, bool &terminate) {
+            //If find it,set terminate to true to terminate traverse
+            request_data *re_data = (request_data *)p;
+            double distance = distanceEarth(re_data->latitude, re_data->longitude, record.latitude, record.longitude);
+
+            if (distance <= re_data->radius)
+            {
+                if(record.timestamp >= re_data->t1 && record.timestamp <= (re_data->t1 +59))
+                {
+                    terminate = true;
+                }
+            }
+        };
+        //Counting valid ID
+        bool terminate = false;
+        record.data.traverseNLR(isRecover, p, terminate);
+        if (terminate)
+        {  
+           cout << " " << record.id;
+           record.isValid = true;
+        }
+    };
+    stringstream stream(request.code);
+    string buf, time_src;
+    void *p = new request_data();
+
+    if (!getline(stream, buf, '_'))
+        return false;
+
+    //Get data form request code
+    if (!getline(stream, buf, '_'))
+        return false;
+    ((request_data *)p)->longitude = stod(buf);
+    if (!getline(stream, buf, '_'))
+        return false;
+    ((request_data *)p)->latitude = stod(buf);
+    if (!getline(stream, buf, '_'))
+        return false;
+    ((request_data *)p)->radius = stod(buf);
+    if (!getline(stream, buf, '_'))
+        return false;
+    time_src = buf;
+    if (!stream.eof() && time_src.length() != 4)
+        return false;
+    
+    parseTime(((request_data *)p)->t1,time_src,recordList[0].timestamp);
+    AVLTree<VM_database> *database = (AVLTree<VM_database> *)pGData;
+    ((request_data *)p)->pData = database;
+
+    cout << request.code[0] << ":";
+    database->traverseLNR(re9_counting,p);
+    cout << endl;
+    delete (request_data *)p;
+    return true;
+}
+
 bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 {
     // TODO: Your code goes
@@ -550,6 +619,9 @@ bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pG
         break;
     case '8':
         return process_request_8(request, recordList, pGData);
+        break;
+    case '9':
+        return process_request_9(request, recordList, pGData);
         break;
     default:
         return false; // return false for invlaid events
