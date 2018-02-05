@@ -125,12 +125,17 @@ struct request_data
     void* pData;
     double longitude;
     double latitude;
+    int number_of_VM;
     time_t t1,t2;
     double radius;
     int h1, h2;
     bool isOutCircle;
     int cnt;
-    L1List<VM_database> temp_data;
+    double min_distance = -1;
+    L1List<string> lessThan2km;
+    L1List<string> lessThan2km_greatThan500m;
+    L1List<string> lessThan500m;
+    L1List<string> lessThan300m;
     request_data() : longitude(0), latitude(0), radius(0),t1(0),t2(0), cnt(0), isOutCircle(true) {}
 };
 bool process_request_1(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
@@ -444,6 +449,113 @@ bool process_request_5(VM_Request &request, L1List<VM_Record> &recordList, void 
     delete (request_data *)p;
     return true;
 }
+bool process_request_6(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
+{
+    void (*parseTime)(time_t &, string &, time_t &) = [](time_t &dest, string &src, time_t &scale) {
+        //parse time to tm
+        struct tm *tm = gmtime(&scale);
+        tm->tm_hour = stoi(src.substr(0, 2));
+        tm->tm_min = stoi(src.substr(2, 2));
+        tm->tm_sec = 0;
+
+        dest = timegm(tm);
+    };
+    void (*re6_counting)(VM_database &, void *) = [](VM_database &record, void *p) {
+        //Fucntion check if record coordinate not in East
+        void (*inStation)(VM_Record &, void *,bool&) = [](VM_Record &record, void *p,bool& terminate) {
+            //If find it,set terminate to true to terminate traverse
+            request_data *re_data = (request_data *)p;
+            double distance = distanceEarth(re_data->latitude, re_data->longitude, record.latitude, record.longitude);
+
+            if (record.timestamp >= (re_data->t1 - 15*60) && record.timestamp <= (re_data->t1))
+            {
+                if(re_data->min_distance < 0) re_data->min_distance = distance;
+                else if (distance < re_data->min_distance)
+                {
+                    re_data->min_distance  = distance;
+                }
+            }
+            
+        };
+        request_data *re_data = (request_data *)p;
+        //Counting valid ID
+        if (record.isValid)
+        {
+            re_data->min_distance = -1;
+            bool terminate = false;
+            record.data.traverseLNR(inStation, p, terminate);
+            if (re_data->min_distance >= 0)
+            {
+                //cout << re_data->min_distance << endl;
+                string id = record.id;
+                if (re_data->min_distance <= 0.3)
+                    re_data->lessThan300m.insertHead(id);
+                if (re_data->min_distance <= 0.5)
+                    re_data->lessThan500m.insertHead(id);
+                if (re_data->min_distance <= 2)
+                    re_data->lessThan2km.insertHead(id);
+                if (re_data->min_distance >= 0.5 && re_data->min_distance <= 2)
+                    re_data->lessThan2km_greatThan500m.insertHead(id);
+
+                re_data->min_distance = -1;
+            }
+        }
+    };
+    stringstream stream(request.code);
+    string buf, time_src;
+    void *p = new request_data();
+
+    if (!getline(stream, buf, '_'))
+        return false;
+
+    //Get data form request code
+    if (!getline(stream, buf, '_'))
+        return false;
+    ((request_data *)p)->longitude = stod(buf);
+    if (!getline(stream, buf, '_'))
+        return false;
+    ((request_data *)p)->latitude = stod(buf);
+    if (!getline(stream, buf, '_'))
+        return false;
+    ((request_data *)p)->number_of_VM = stod(buf);
+    if (!getline(stream, buf, '_'))
+        return false;
+    time_src = buf;
+    if (!stream.eof() && time_src.length() != 4)
+        return false;
+    
+    parseTime(((request_data *)p)->t1,time_src,recordList[0].timestamp);
+    AVLTree<VM_database> *database = (AVLTree<VM_database> *)pGData;
+    ((request_data *)p)->pData = database;
+
+    database->traverseRNL(re6_counting,p);
+
+    void (*print_list)(string &) = [](string &id) {
+        cout << " " << id;
+    };
+    request_data *re_data = (request_data *)p;
+
+    cout << request.code[0] << ":";
+    if(double(re_data->lessThan300m.getSize()/re_data->number_of_VM) >= 0.75)
+    {
+        cout << "-1 -";
+        re_data->lessThan2km.traverse(print_list);
+    }
+    else if (re_data->lessThan2km.getSize() < re_data->number_of_VM)
+    {    
+        re_data->lessThan2km.traverse(print_list);
+        cout << " - -1";
+    }
+    else
+    {
+        re_data->lessThan500m.traverse(print_list);
+        cout << " -";
+        re_data->lessThan2km_greatThan500m.traverse(print_list);
+    }
+    cout << endl;
+    delete (request_data *)p;
+    return true;
+}
 bool process_request_8(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 {
     void (*parseTime)(time_t &, string &, time_t &) = [](time_t &dest, string &src, time_t &scale) {
@@ -584,7 +696,6 @@ bool process_request_9(VM_Request &request, L1List<VM_Record> &recordList, void 
     delete (request_data *)p;
     return true;
 }
-
 bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 {
     // TODO: Your code goes
@@ -626,6 +737,9 @@ bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pG
         break;
     case '5':
         return process_request_5(request, recordList, pGData);
+        break;
+    case '6':
+        return process_request_6(request, recordList, pGData);
         break;
     case '8':
         return process_request_8(request, recordList, pGData);
