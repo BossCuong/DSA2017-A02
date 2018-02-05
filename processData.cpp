@@ -536,15 +536,16 @@ bool process_request_6(VM_Request &request, L1List<VM_Record> &recordList, void 
     request_data *re_data = (request_data *)p;
 
     cout << request.code[0] << ":";
-    if(double(re_data->lessThan300m.getSize()/re_data->number_of_VM) >= 0.75)
+
+    if (re_data->lessThan2km.getSize() < re_data->number_of_VM)
+    {
+        re_data->lessThan2km.traverse(print_list);
+        cout << " - -1";
+    }
+    else if (double(re_data->lessThan300m.getSize() / re_data->number_of_VM) >= 0.75)
     {
         cout << "-1 -";
         re_data->lessThan2km.traverse(print_list);
-    }
-    else if (re_data->lessThan2km.getSize() < re_data->number_of_VM)
-    {    
-        re_data->lessThan2km.traverse(print_list);
-        cout << " - -1";
     }
     else
     {
