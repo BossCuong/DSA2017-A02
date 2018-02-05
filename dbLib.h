@@ -53,13 +53,13 @@ void    loadVMDB(char*, L1List<VM_Record> &);
 double  distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
 
 inline bool operator==(VM_Record& lhs, time_t rhs) {
-    return lhs.timestamp == rhs;
+    return difftime(lhs.timestamp,rhs) == 0;
 }
 inline bool operator==(time_t lhs, VM_Record& rhs)  {
-    return lhs == rhs.timestamp;
+    return difftime(lhs,rhs.timestamp) == 0;
 }
 inline bool operator==(VM_Record& lhs, VM_Record& rhs) {
-    return lhs.timestamp == rhs.timestamp;
+    return difftime(lhs.timestamp,rhs.timestamp) == 0;
 }
 
 inline bool operator!=(VM_Record& lhs,time_t rhs) {
@@ -73,43 +73,43 @@ inline bool operator!=(VM_Record& lhs, VM_Record& rhs) {
 }
 
 inline bool operator>=(VM_Record& lhs, time_t rhs) {
-    return lhs.timestamp >= rhs;
+    return difftime(lhs.timestamp,rhs) >= 0;
 }
 inline bool operator>=(time_t lhs, VM_Record& rhs) {
-    return lhs >= rhs.timestamp;
+    return difftime(lhs,rhs.timestamp) >= 0;
 }
 inline bool operator>=(VM_Record& lhs, VM_Record& rhs) {
-    return lhs.timestamp >= rhs.timestamp;
+    return difftime(lhs.timestamp,rhs.timestamp) >= 0;
 }
 
 inline bool operator<=(VM_Record& lhs, time_t rhs)  {
-    return lhs.timestamp <= rhs;;
+    return difftime(lhs.timestamp,rhs) <= 0;
 }
 inline bool operator<=(time_t lhs, VM_Record& rhs)  {
-    return lhs <= rhs.timestamp;
+    return difftime(lhs,rhs.timestamp) <= 0;
 }
 inline bool operator<=(VM_Record& lhs, VM_Record& rhs)  {
-    return lhs.timestamp <= rhs.timestamp;
+    return difftime(lhs.timestamp,rhs.timestamp) <= 0;
 }
 
-inline bool operator>(VM_Record& lhs, time_t rhs){
-    return lhs.timestamp > rhs;
+inline bool operator>(VM_Record& lhs, time_t rhs)  {
+    return difftime(lhs.timestamp,rhs) > 0;
 }
-inline bool operator>(time_t lhs, VM_Record& rhs) {
-    return lhs > rhs.timestamp;
+inline bool operator>(time_t lhs, VM_Record& rhs)  {
+    return difftime(lhs,rhs.timestamp) > 0;
 }
-inline bool operator>(VM_Record& lhs, VM_Record& rhs) {
-    return lhs.timestamp > rhs.timestamp;
+inline bool operator>(VM_Record& lhs, VM_Record& rhs)  {
+    return difftime(lhs.timestamp,rhs.timestamp) > 0;
 }
 
 inline bool operator<(VM_Record& lhs, time_t rhs) {
-    return lhs.timestamp < rhs;
+    return difftime(lhs.timestamp,rhs) < 0;
 }
 inline bool operator<(time_t lhs, VM_Record& rhs) {
-    return lhs < rhs.timestamp;
+    return difftime(lhs,rhs.timestamp) < 0;
 }
 inline bool operator<(VM_Record& lhs, VM_Record& rhs) {
-    return lhs.timestamp < rhs.timestamp;
+     return difftime(lhs.timestamp,rhs.timestamp) < 0;
 }
 
 
