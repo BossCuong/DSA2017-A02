@@ -53,7 +53,6 @@ void loadVMDB(char *fName, L1List<VM_Record> &db)
         }
         db.removeHead(); /// remove the first dummy
 
-        db.reverse();
         inFile.close();
     }
     else
@@ -100,6 +99,7 @@ void process(L1List<VM_Request> &requestList, L1List<VM_Record> &rList)
     {
         if (!processRequest(requestList[0], rList, pGData))
             cout << requestList[0].code << " is an invalid event\n";
+        else cout << endl;
         requestList.removeHead();
     }
 

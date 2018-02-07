@@ -24,14 +24,14 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#define REQUEST_CODE_SIZE     16
+#define REQUEST_CODE_SIZE     100
 #define MAX_PARAM_SIZE         6
 using namespace std;
 
 typedef struct VM_Request {
     char        code[REQUEST_CODE_SIZE];
     double      params[MAX_PARAM_SIZE];
-
+    
     VM_Request() {
         *code   = '0';// default event is "0"
         code[1] = 0;
@@ -62,5 +62,4 @@ typedef struct VM_Request {
 };
 
 void loadRequests(char* fName, L1List<VM_Request> &);
-
 #endif //DSA171A2_REQUESTLIB_H
