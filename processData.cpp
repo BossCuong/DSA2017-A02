@@ -230,7 +230,7 @@ bool process_request_1(VM_Request &request, L1List<VM_Record> &recordList, void 
     }
 
     //If not find anything
-    cout << request.code[0] << ": " << -1;
+    cout << request.code[0] << ": " << "-1";
     return true;
 }
 bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
@@ -513,7 +513,7 @@ bool process_request_5(VM_Request &request, L1List<VM_Record> &recordList, void 
             return true;
         }
     }
-    cout << request.code[0] << ": " << -1;
+    cout << request.code[0] << ": " << "-1";
     delete (request_data *)p;
     return true;
 }
@@ -964,21 +964,21 @@ bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pG
     case '4':
         return process_request_4(request, recordList, pGData);
         break;
-    case '5':
-        return process_request_5(request, recordList, pGData);
-        break;
-    case '6':
-        return process_request_6(request, recordList, pGData);
-        break;
-    case '7':
-        return process_request_7(request, recordList, pGData);
-        break;
-    case '8':
-        return process_request_8(request, recordList, pGData);
-        break;
-    case '9':
-        return process_request_9(request, recordList, pGData);
-        break;
+    // case '5':
+    //     return process_request_5(request, recordList, pGData);
+    //     break;
+    // case '6':
+    //     return process_request_6(request, recordList, pGData);
+    //     break;
+    // case '7':
+    //     return process_request_7(request, recordList, pGData);
+    //     break;
+    // case '8':
+    //     return process_request_8(request, recordList, pGData);
+    //     break;
+    // case '9':
+    //     return process_request_9(request, recordList, pGData);
+    //     break;
     default:
         return false; // return false for invlaid events
     }
