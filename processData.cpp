@@ -617,23 +617,19 @@ bool process_request_6(VM_Request &request, L1List<VM_Record> &recordList, void 
     cout << request.code[0] << ":";
     if (re_data->lessThan2km.getSize() < re_data->number_of_VM)
     {
-        if(re_data->lessThan2km.getSize() == 0) cout << " -1";
-        else re_data->lessThan2km.traverse(print_list);
+        re_data->lessThan2km.traverse(print_list);
         cout << " - -1";
     }
     else if ((double(re_data->lessThan300m.getSize()) / re_data->number_of_VM) >= 0.75)
     {
         cout << " -1 -";
-        if(re_data->lessThan2km.getSize() == 0) cout << " -1";
-        else re_data->lessThan2km.traverse(print_list);
+        re_data->lessThan2km.traverse(print_list);
     }
     else
     {
-        if(re_data->lessThan500m.getSize() == 0) cout << " -1";
-        else re_data->lessThan500m.traverse(print_list);
+        re_data->lessThan500m.traverse(print_list);
         cout << " -";
-        if(re_data->lessThan2km_greatThan500m.getSize() == 0) cout << " -1";
-        else re_data->lessThan2km_greatThan500m.traverse(print_list);
+        re_data->lessThan2km_greatThan500m.traverse(print_list);
     }
     delete (request_data *)p;
     return true;
@@ -964,21 +960,21 @@ bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pG
     case '4':
         return process_request_4(request, recordList, pGData);
         break;
-    // case '5':
-    //     return process_request_5(request, recordList, pGData);
-    //     break;
-    // case '6':
-    //     return process_request_6(request, recordList, pGData);
-    //     break;
-    // case '7':
-    //     return process_request_7(request, recordList, pGData);
-    //     break;
-    // case '8':
-    //     return process_request_8(request, recordList, pGData);
-    //     break;
-    // case '9':
-    //     return process_request_9(request, recordList, pGData);
-    //     break;
+    case '5':
+        return process_request_5(request, recordList, pGData);
+        break;
+    case '6':
+        return process_request_6(request, recordList, pGData);
+        break;
+    case '7':
+        return process_request_7(request, recordList, pGData);
+        break;
+    case '8':
+        return process_request_8(request, recordList, pGData);
+        break;
+    case '9':
+        return process_request_9(request, recordList, pGData);
+        break;
     default:
         return false; // return false for invlaid events
     }
