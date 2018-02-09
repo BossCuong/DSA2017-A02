@@ -58,7 +58,7 @@ void loadVMDB(char *fName, L1List<VM_Record> &db)
     else
     {
         cout << "The file is not found!";
-        throw DSAException(-1,"File not found");
+        return;
     }
 }
 

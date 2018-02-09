@@ -171,10 +171,9 @@ bool process_request_1(VM_Request &request, L1List<VM_Record> &recordList, void 
 
     stringstream stream(request.code);
     string buf, time_src;
-
+    if(request.code[1] != '_') return false;
     if (!getline(stream, buf, '_'))
         return false;
-    if(buf != "1") return false;
     //Key contain ID to find ID in database
     if (!getline(stream, buf, '_'))
         return false;
@@ -271,6 +270,7 @@ bool process_request_2(VM_Request &request, L1List<VM_Record> &recordList, void 
 
     stringstream stream(request.code);
     string buf, relative;
+    if(request.code[1] != '_') return false;
     if (!getline(stream, buf, '_'))
         return false;
     if(buf != "2") return false;
@@ -342,6 +342,7 @@ bool process_request_3(VM_Request &request, L1List<VM_Record> &recordList, void 
 
     stringstream stream(request.code);
     string buf, relative;
+    if(request.code[1] != '_') return false;
     if (!getline(stream, buf, '_'))
         return false;
     if(buf != "3") return false;
@@ -405,6 +406,7 @@ bool process_request_4(VM_Request &request, L1List<VM_Record> &recordList, void 
     void *p = new request_data();
     stringstream stream(request.code);
     string buf;
+    if(request.code[1] != '_') return false;
     if (!getline(stream, buf, '_'))
         return false;
     
@@ -471,7 +473,7 @@ bool process_request_5(VM_Request &request, L1List<VM_Record> &recordList, void 
 
     stringstream stream(&request.code[2]);
     string buf, relative;
-
+    if(request.code[1] != '_') return false;
     //Init key to find ID in database
     if (!getline(stream, buf, '_'))
         return false;
@@ -572,7 +574,7 @@ bool process_request_6(VM_Request &request, L1List<VM_Record> &recordList, void 
     stringstream stream(request.code);
     string buf, time_src;
     void *p = new request_data();
-
+    if(request.code[1] != '_') return false;
     if (!getline(stream, buf, '_'))
         return false;
     
@@ -703,7 +705,7 @@ bool process_request_7(VM_Request &request, L1List<VM_Record> &recordList, void 
     stringstream stream(request.code);
     string buf, time_src;
     void *p = new request_data();
-
+    if(request.code[1] != '_') return false;
     if (!getline(stream, buf, '_'))
         return false;
     try{
@@ -802,7 +804,7 @@ bool process_request_8(VM_Request &request, L1List<VM_Record> &recordList, void 
     stringstream stream(request.code);
     string buf, time_src;
     void *p = new request_data();
-
+    if(request.code[1] != '_') return false;
     if (!getline(stream, buf, '_'))
         return false;
     try{
@@ -881,7 +883,7 @@ bool process_request_9(VM_Request &request, L1List<VM_Record> &recordList, void 
     stringstream stream(request.code);
     string buf, time_src;
     void *p = new request_data();
-
+    if(request.code[1] != '_') return false;
     if (!getline(stream, buf, '_'))
         return false;
     try{
