@@ -14,19 +14,30 @@
 void loadRequests(char *fName, L1List<VM_Request> &rList)
 {
     // TODO: write your code to load requests. Each request is separated by a whitespace
-   ifstream inFile;
+	ifstream inFile;
 	inFile.open(fName);
-	if (!inFile) {
+	if (inFile)
+	{
+        VM_Request request;
+		rList.insertHead(request); /// add dummy object
+		string str;
+		while (inFile)
+		{
+			if (inFile >> str)
+			{
+				if (str[str.length() - 1] == ';')
+					str.erase(str.length() - 1);
+				strcpy(rList[0].code,(char*)str.data());
+				rList.insertHead(request);
+			}
+		}
+		rList.removeHead(); /// remove the first dummy
+        rList.reverse();
+	}
+	else
+	{
 		cout << "The file is not found!";
 		return;
-	}
-	string str;
-	while (inFile) {
-		if (inFile >> str) {
-			if (str[str.length() - 1] == ';') str.erase(str.length() - 1);
-			VM_Request newRequest(str);
-			rList.push_back(newRequest);
-		}
 	}
 	inFile.close();
 }
