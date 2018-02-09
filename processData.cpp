@@ -143,6 +143,7 @@ struct request_data
     int h1, h2;
     bool isOutCircle;
     int cnt;
+    int percent_cnt = 0;
     double min_distance = -1;
     L1List<string> lessThan2km;
     L1List<string> lessThan2km_greatThan500m;
@@ -152,6 +153,7 @@ struct request_data
     double max_distance = -1;
     AVLTree<string> lessThan1km_andStuck;
     AVLTree<re7_database> lessThan2km_greatThan1km;
+    AVLTree<string> lessThan2km_greatThan1km_75;
     request_data() : longitude(0), latitude(0), radius(0),t1(0),t2(0), cnt(0), isOutCircle(true) {}
 };
 bool process_request_1(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
@@ -662,8 +664,8 @@ bool process_request_7(VM_Request &request, L1List<VM_Record> &recordList, void 
                     re_data->min_distance  = distance;
                 }
 
-                if(re_data->max_distance < 0) re_data->max_distance = distance;
-                else if (distance > re_data->max_distance)
+                if(re_data->max_distance < 0 && distance >= 1 && distance <= 2) re_data->max_distance = distance;
+                else if (distance > re_data->max_distance && distance >= 1 && distance <= 2)
                 {
                     re_data->max_distance  = distance;
                 }
@@ -692,7 +694,7 @@ bool process_request_7(VM_Request &request, L1List<VM_Record> &recordList, void 
                     re_data->lessThan1km_andStuck.insert(id);
                 if(re_data->min_distance <= 2)
                     re_data->lessThan2km.insertHead(id);
-                if (re_data->min_distance >= 1 && re_data->min_distance <= 2)
+                if (re_data->min_distance >= 1 && re_data->min_distance <= 2 && re_data->max_distance > 0)
                 {
                     re_data->lessThan2km_greatThan1km.insert(re);
                     re_data->cnt++;
@@ -749,6 +751,20 @@ bool process_request_7(VM_Request &request, L1List<VM_Record> &recordList, void 
     void (*print_list)(string &) = [](string &id) {
         cout << " " << id;
     };
+    void (*sort_result)(re7_database&,void*) = [](re7_database &record,void* p) {
+        request_data *re_data = (request_data *)p;
+        string id = record.id;
+        if(re_data->percent_cnt > 0)
+        {
+            re_data->lessThan2km_greatThan1km_75.insert(id);
+            re_data->percent_cnt--;
+        }
+        else
+        {
+            re_data->lessThan1km_andStuck.insert(id);
+        }
+     
+    };
     request_data *re_data = (request_data *)p;
 
     cout << request.code[0] << ":";
@@ -760,7 +776,13 @@ bool process_request_7(VM_Request &request, L1List<VM_Record> &recordList, void 
     }
     else
     {
-
+        re_data->percent_cnt = 0.75*re_data->cnt;
+        re_data->lessThan2km_greatThan1km.traverseRNL(sort_result,p);
+        
+        re_data->lessThan1km_andStuck.traverseLNR(print_list);
+        cout << " -";
+        re_data->lessThan2km_greatThan1km_75.traverseLNR(print_list);
+    
     }
     delete (request_data *)p;
     return true;
