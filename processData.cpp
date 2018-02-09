@@ -568,6 +568,10 @@ bool process_request_6(VM_Request &request, L1List<VM_Record> &recordList, void 
                     re_data->min_distance  = distance;
                 }
             }
+            else if(record.timestamp > re_data->t1)
+            {
+                terminate = true;
+            }
             
         };
         request_data *re_data = (request_data *)p;
@@ -691,6 +695,10 @@ bool process_request_7(VM_Request &request, L1List<VM_Record> &recordList, void 
                     re_data->max_distance  = distance;
                 }
                
+            }
+            else if(record.timestamp > (re_data->t1 + 30*60))
+            {
+                terminate = true;
             }
             
         };
