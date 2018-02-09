@@ -772,17 +772,19 @@ bool process_request_7(VM_Request &request, L1List<VM_Record> &recordList, void 
     if ((double(re_data->lessThan500m.getSize()) / re_data->number_of_VM) < 0.7)
     {
         cout << " -1 -";
-        re_data->lessThan2km.traverse(print_list); 
+        if(re_data->lessThan2km.getSize() == 0) cout << " -1";
+        else re_data->lessThan2km.traverse(print_list); 
     }
     else
     {
         re_data->percent_cnt = 0.75*re_data->cnt;
         re_data->lessThan2km_greatThan1km.traverseRNL(sort_result,p);
         
-        re_data->lessThan1km_andStuck.traverseLNR(print_list);
+        if(re_data->lessThan1km_andStuck.isEmpty()) cout << " -1";
+        else re_data->lessThan1km_andStuck.traverseLNR(print_list);
         cout << " -";
-        re_data->lessThan2km_greatThan1km_75.traverseLNR(print_list);
-    
+        if(re_data->lessThan2km_greatThan1km_75.isEmpty()) cout << " -1";
+        else re_data->lessThan2km_greatThan1km_75.traverseLNR(print_list);
     }
     delete (request_data *)p;
     return true;
