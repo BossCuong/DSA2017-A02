@@ -88,6 +88,8 @@ bool parseVMRecord(char *pBuf, VM_Record &bInfo)
     //Get latitude
     getline(stream, buf, ',');
     bInfo.latitude = stod(buf);
+
+    return true;
 }
 
 void process(L1List<VM_Request> &requestList, L1List<VM_Record> &rList)
