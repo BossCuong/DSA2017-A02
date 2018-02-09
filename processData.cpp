@@ -18,7 +18,7 @@ struct VM_database
 {
     char id[ID_MAX_LENGTH];
     AVLTree<VM_Record> data;
-    bool isValid = true;
+    bool isValid;
     // default constructor
     VM_database()
     {
@@ -123,6 +123,11 @@ struct re7_database
 {
     char id[ID_MAX_LENGTH];
     double distance;
+    re7_database()
+    {
+        id[0] = 0;
+        distance = 0;
+    }
 };
 inline bool operator<(re7_database &lhs, re7_database &rhs)
 {
@@ -143,18 +148,34 @@ struct request_data
     int h1, h2;
     bool isOutCircle;
     int cnt;
-    int percent_cnt = 0;
-    double min_distance = -1;
+    int percent_cnt;
+    double min_distance;
     L1List<string> lessThan2km;
     L1List<string> lessThan2km_greatThan500m;
     L1List<string> lessThan500m;
     L1List<string> lessThan300m;
 
-    double max_distance = -1;
+    double max_distance;
     AVLTree<string> lessThan1km_andStuck;
     AVLTree<re7_database> lessThan2km_greatThan1km;
     AVLTree<string> lessThan2km_greatThan1km_75;
-    request_data() : longitude(0), latitude(0), radius(0),t1(0),t2(0), cnt(0), isOutCircle(true) {}
+    request_data()
+    {
+        pData = NULL;
+        longitude = 0;
+        latitude = 0;
+        number_of_VM = 0;
+        t1 =0;
+        t2 = 0;
+        radius =0;
+        h1 = 0;
+        h2 = 0;
+        isOutCircle = true;
+        cnt = 0;
+        percent_cnt = 0;
+        min_distance = -1;
+        max_distance = -1;
+    }
 };
 bool process_request_1(VM_Request &request, L1List<VM_Record> &recordList, void *pGData)
 {
