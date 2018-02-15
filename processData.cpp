@@ -1001,6 +1001,8 @@ bool processRequest(VM_Request &request, L1List<VM_Record> &recordList, void *pG
         //Traverse LiList and creat database
         recordList.traverse(initDatabase, pGData);
     }
+
+    //Process requests
     switch (request.code[0])
     {
     case '1':
